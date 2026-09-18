@@ -1,0 +1,85 @@
+Prompt encargado de henerar el codigo:
+Eres un asistente experto en programación lineal, dualidad y análisis de sensibilidad,
+trabajando en Python dentro de un notebook Jupyter (.ipynb).
+
+CONTEXTO DEL TALLER
+Debo entregar un notebook único que resuelva DOS problemas de PL (dispacho eléctrico y
+portafolio de crédito), con dualidad, sensibilidad y una sección de verificación crítica
+transversal (V.1–V.8). Te paso los datos exactos de ambos problemas abajo. NO reformules
+el enunciado ni asumas datos: usa exactamente estos valores y unidades.
+
+--- PROBLEMA 1: Despacho eléctrico ---
+Minimizar costo variable total. Variables x_j = GWh generados por planta j (j=1..5).
+Datos (costo miles USD/GWh, capacidad GWh/semana, emisiones tCO2/GWh):
+G1 Hidro:   c=12, cap=260, e=0
+G2 Eólica:  c=8,  cap=120, e=0
+G3 Ciclo combinado gas: c=45, cap=300, e=400
+G4 Carbón:  c=32, cap=280, e=900
+G5 Diésel:  c=95, cap=90,  e=700
+Restricciones:
+- Demanda: suma x_j = 780 GWh (igualdad)
+- Emisiones: suma e_j*x_j <= 245000 tCO2
+- Cuota renovable: x_G1+x_G2 >= 0.40*780
+- Take-or-pay gas: x_G3 >= 50
+- 0 <= x_j <= cap_j
+
+--- PROBLEMA 2: Portafolio de crédito ---
+Maximizar rendimiento neto. Variables x_j = millones USD en línea j (j=1..5).
+Datos (rendimiento %, índice riesgo pts/millón, límite concentración MUSD):
+L1 Consumo:     r=16.5, riesgo=9, límite=150
+L2 Vehículo:    r=11.5, riesgo=5, límite=120
+L3 Hipotecario: r=7.0,  riesgo=2, límite=250
+L4 PyME:        r=13.0, riesgo=6, límite=180
+L5 Corporativo: r=6.0,  riesgo=1, límite=250
+Restricciones:
+- Presupuesto: suma x_j = 600 (igualdad)
+- Apetito de riesgo: suma riesgo_j*x_j <= 3300 puntos (=5.5*600)
+- Regulatorio bajo riesgo: x_L3+x_L5 >= 0.20*600
+- Meta comercial PyME: x_L4 >= 50
+- 0 <= x_j <= límite_j
+
+REQUISITOS TÉCNICOS OBLIGATORIOS
+1. Formular primal y dual algebraicamente (Markdown con LaTeX) para cada problema,
+   con signo de cada variable dual según el sentido de la restricción.
+2. Resolver el primal con scipy.optimize.linprog (HiGHS) Y con PuLP (CBC). Reportar
+   ambos: valor óptimo, variables, holguras/excesos, restricciones activas.
+3. Resolver el dual EXPLÍCITAMENTE como un PL independiente (no solo leer los
+   multiplicadores del primal) y comparar contra res.ineqlin.marginals /
+   res.eqlin.marginals (SciPy) y constraint.pi (PuLP). Ojo con convenciones de signo
+   entre solvers y entre min/max.
+4. Calcular costos reducidos y verificar cuáles restricciones duales están activas.
+5. Verificar dualidad fuerte (c^T x* = b^T y*), reportar gap absoluto y relativo (<1e-6).
+6. Verificar holgura complementaria (y_i*s_i=0 para restricciones, costo_reducido_j*x_j=0
+   para variables) y factibilidad dual (signos correctos de A^T y vs c).
+7. Análisis de sensibilidad por PERTURBACIÓN FINITA (re-resolver con b_i ± δ) para
+   cada recurso con precio sombra no nulo: encontrar el rango de validez (punto de
+   quiebre) y qué restricción se activa ahí. Para los demás recursos, tabla resumen
+   (precio sombra + rango). Detalle completo (tabla/gráfica) en al menos 2 recursos
+   por problema.
+8. Diseñar al menos 3 pruebas de coherencia en total (mínimo 1 por problema),
+   incluyendo un análisis de unicidad (¿hay variables no básicas con costo reducido
+   nulo? ¿existen soluciones alternativas?).
+9. Verificación de factibilidad primal SIN el solver: calcular A@x* vs b con numpy,
+   reportar vector de residuos y tolerancia explícita.
+10. Ser estricto con unidades: en Problema 1, costo en miles USD/GWh, dual de la
+    demanda queda en miles USD/GWh, dual de emisiones en USD/tCO2. En Problema 2,
+    convertir % a fracción ANTES de usarlo en restricciones; el dual del riesgo debe
+    reportarse en "USD adicionales de rendimiento por punto de riesgo". Etiqueta cada
+    número reportado con sus unidades.
+11. Estructura del notebook: una sección por problema (preguntas 1-9) + sección V
+    transversal (V.1 a V.8, con V.5 consolidada y V.8 única para todo el taller).
+    ~40-60 celdas de código+markdown.
+12. El notebook debe correr de principio a fin sin errores (Restart & Run All).
+
+QUÉ QUIERO QUE ME ENTREGUES A MÍ AHORA (no el análisis final, solo la base)
+- El código completo y ejecutable de todas las secciones anteriores.
+- Para cada pregunta 6 y 9 de ambos problemas (interpretación económica y decisiones
+  de negocio): NO escribas la interpretación completa. En su lugar, dame solo los
+  NÚMEROS clave (valor óptimo, cada variable dual con su unidad, rangos de validez,
+  puntos de quiebre, resultado de cada re-optimización pedida en 9). Yo redactaré la
+  interpretación con mis propias palabras.
+- Señala explícitamente, al final, al menos un supuesto, simplificación o posible
+  error/limitación de tu propio código que yo debería revisar o cuestionar (lo
+  necesito para la sección V.8 de registro de uso de IA — debo documentar un error
+  real que haya detectado, no uno inventado, así que sé honesto sobre puntos débiles
+  reales, no genéricos).
